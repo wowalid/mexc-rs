@@ -14,12 +14,17 @@ use crate::spot::ws::message::deals::{
 use crate::spot::ws::message::kline::{
     channel_message_to_spot_kline_message, RawKlineData, SpotKlineMessage,
 };
+
 use chrono::{DateTime, Utc};
 
+use self::depth_orderbooks::{
+    channel_message_to_orderbook_depth_message, OrderBookData, SpotDepthOrderbookMessage,
+};
 pub mod account_deals;
 pub mod account_orders;
 pub mod account_update;
 pub mod deals;
+pub mod depth_orderbooks;
 pub mod kline;
 
 #[derive(Debug)]
@@ -29,6 +34,7 @@ pub enum Message {
     AccountOrders(AccountOrdersMessage),
     Deals(SpotDealsMessage),
     Kline(SpotKlineMessage),
+    OrderBook(SpotDepthOrderbookMessage),
 }
 
 impl TryFrom<&RawMessage> for Message {
@@ -60,6 +66,10 @@ impl TryFrom<&RawMessage> for Message {
                             .map_err(|_| ())?,
                     )),
                 },
+                RawChannelMessageData::OrderBook(_) => Ok(Message::OrderBook(
+                    channel_message_to_orderbook_depth_message(raw_channel_message)
+                        .map_err(|_| ())?,
+                )),
             },
         }
     }
@@ -97,6 +107,7 @@ pub(crate) struct RawChannelMessage {
 #[derive(Debug, serde::Deserialize)]
 #[serde(untagged)]
 pub(crate) enum RawChannelMessageData {
+    OrderBook(OrderBookData),
     AccountDeals(RawAccountDealsData),
     AccountUpdate(RawAccountUpdateData),
     AccountOrders(RawAccountOrdersChannelMessageData),
@@ -116,6 +127,7 @@ pub(crate) struct RawEventChannelMessageData {
 #[serde(rename_all = "camelCase")]
 pub(crate) enum RawEventEventChannelMessageData {
     Deals(Vec<RawSpotDealData>),
+
     #[serde(rename = "k")]
     Kline(RawKlineData),
 }
