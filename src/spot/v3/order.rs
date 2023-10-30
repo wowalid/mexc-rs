@@ -87,17 +87,6 @@ impl OrderEndpoint for MexcSpotApiClientWithAuthentication {
             .query(&query_with_signature)
             .send()
             .await?;
-
-        let text = response.text().await?;
-        println!("{:?}", text);
-
-        let response = self
-            .reqwest_client
-            .post(&endpoint)
-            .query(&query_with_signature)
-            .send()
-            .await?;
-
         let api_response = response.json::<ApiResponse<OrderOutput>>().await?;
         let output = api_response.into_api_result()?;
 
